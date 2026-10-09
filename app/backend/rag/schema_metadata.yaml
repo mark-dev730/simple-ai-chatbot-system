@@ -1,0 +1,260 @@
+# Semantic metadata for database tables
+# User-friendly descriptions that help the AI understand and query manufacturing data
+
+tables:
+  conv_test_pivot_queue_sim:
+    description: "Device production and testing data - tracks each device through manufacturing, testing, and scheduling"
+    
+    business_context: |
+      This table shows the journey of semiconductor devices from planning through production.
+      Each row represents one device and includes:
+      - When it was originally planned (origin_month) vs. when it's actually scheduled (current_month)
+      - Test results from 3 phases with yield percentages
+      - Final status: was it placed in production, removed (de-committed), or rescheduled?
+      - Quality metrics and which equipment processed it
+    
+    row_count: 5444
+    primary_key: row_id
+    
+    columns:
+      row_id:
+        type: integer
+        description: "Unique ID number for each device record"
+        searchable: false
+        
+      wbdevice:
+        type: string
+        description: "Device identifier code"
+        searchable: true
+        business_meaning: "Unique code that identifies which specific device this is"
+        
+      billed_units:
+        type: integer
+        description: "How many units are being billed/charged for this device"
+        searchable: true
+        business_meaning: "The quantity that will be invoiced to the customer"
+        aggregatable: true
+        
+      akit:
+        type: string
+        description: "Assembly kit type"
+        searchable: true
+        business_meaning: "The packaging/assembly configuration used"
+      
+      concat_lookup:
+        type: string
+        description: "Combined lookup code (device + akit)"
+        searchable: true
+        business_meaning: "Quick reference combining device and assembly info"
+        
+      mkt_part_num:
+        type: string
+        description: "Marketing part number - product code customers see"
+        searchable: true
+        business_meaning: "External product SKU used in sales materials"
+      
+      buildkit:
+        type: string
+        description: "Build kit specification"
+        searchable: true
+        business_meaning: "Manufacturing build configuration"
+      
+      origin_month:
+        type: string
+        description: "Originally planned month (YYYYMM format, e.g. 202611 = November 2026)"
+        searchable: true
+        business_meaning: "When this device was ORIGINALLY scheduled - the initial demand forecast"
+        example_values: ["202611", "202701", "202612"]
+        use_when: "Asking about original plans, forecasts, or demand. Example: 'devices planned for November'"
+        format: "6-digit string YYYYMM"
+      
+      current_month:
+        type: string
+        description: "Actual current month after schedule changes (YYYYMM format)"
+        searchable: true
+        business_meaning: "ACTUAL month after push-backs or pull-ins - the current reality"
+        use_when: "Asking about current/actual schedule, what's happening now. Example: 'devices for November' (without 'planned' or 'forecast')"
+        format: "6-digit string YYYYMM"
+        important: "Use this for questions about actual/current month, not origin_month"
+        
+      finish_resource:
+        type: string
+        description: "Which machine/equipment completes final processing"
+        searchable: true
+        business_meaning: "Production line assigned for finishing"
+      
+      finish_status:
+        type: string
+        description: "Status of finishing process"
+        searchable: true
+        common_values: ["OK", "PENDING", "N/A"]
+        
+      assigned_finish_resource:
+        type: string
+        description: "Confirmed finish equipment assignment"
+        searchable: true
+        
+      bi_resource:
+        type: string
+        description: "Burn-in testing equipment"
+        searchable: true
+        
+      bi_percent:
+        type: string
+        description: "Burn-in percentage/allocation"
+        searchable: false
+        
+      bi_status:
+        type: string
+        description: "Burn-in testing status"
+        searchable: true
+        common_values: ["OK", "N/A", "PENDING"]
+        
+      tr_alloc:
+        type: float
+        description: "Tray allocation ratio"
+        searchable: false
+        aggregatable: true
+        
+      conv_tr:
+        type: number
+        description: "Devices that fill complete trays"
+        searchable: false
+        aggregatable: true
+        
+      conv_tray:
+        type: number
+        description: "Devices remaining (don't fill complete tray)"
+        searchable: false
+        aggregatable: true
+        
+      raw_test_yield:
+        type: string
+        description: "Raw test yield from initial testing"
+        searchable: false
+        
+      p1_yield:
+        type: float
+        description: "Phase 1 test pass rate (0-100%)"
+        searchable: true
+        business_meaning: "First test phase - what percentage passed (higher is better!)"
+        aggregatable: true
+        typical_range: "95-100% is good"
+        
+      p2_yield:
+        type: float
+        description: "Phase 2 test pass rate (0-100%)"
+        searchable: true
+        business_meaning: "Second test phase pass rate"
+        aggregatable: true
+        typical_range: "95-100% is good"
+        
+      p3_yield:
+        type: float
+        description: "Phase 3 test pass rate (0-100%)"
+        searchable: true
+        business_meaning: "Final test phase before shipping"
+        aggregatable: true
+        typical_range: "95-100% is good"
+        
+      p1_pivot:
+        type: string
+        description: "Phase 1 pivot decision (if device didn't meet specs)"
+        searchable: true
+        business_meaning: "Where device was redirected after Phase 1"
+        
+      p2_pivot:
+        type: string
+        description: "Phase 2 pivot decision"
+        searchable: true
+        
+      p3_pivot:
+        type: string
+        description: "Phase 3 pivot decision"
+        searchable: true
+        
+      outcome:
+        type: string
+        description: "Final status of the device"
+        searchable: true
+        business_meaning: "What happened to this device in the end"
+        common_values: ["PLACED", "DE_COMMIT", "MOVED", "PUSHED_BACK", "PULLED_IN"]
+        value_meanings:
+          PLACED: "Successfully allocated for production"
+          DE_COMMIT: "Removed from production (demand changed or quality issue)"
+          MOVED: "Transferred between stages"
+          PUSHED_BACK: "Schedule delayed to later month"
+          PULLED_IN: "Schedule moved up to earlier month"
+          
+      final_pref:
+        type: string
+        description: "Priority level (P1=highest, P2=medium, P3=lowest)"
+        searchable: true
+        common_values: ["P1", "P2", "P3"]
+        
+      final_pivot:
+        type: string
+        description: "Final destination after all redirects"
+        searchable: true
+        business_meaning: "Where device ended up - final product grade"
+        
+      remarks:
+        type: string
+        description: "Notes and comments about this device"
+        searchable: true
+        business_meaning: "Human-written notes about special conditions or issues"
+    
+    common_queries:
+      - "How many devices are DE_COMMIT for November 2026?"
+      - "What's the average yield?"
+      - "Show devices with low yield"
+      - "Which equipment has the best results?"
+      - "How many devices were pushed back?"
+
+query_patterns:
+  date_filtering:
+    description: "Working with months (origin_month and current_month are text in YYYYMM format)"
+    examples:
+      - "WHERE origin_month = '202611'  -- November 2026"
+      - "WHERE origin_month LIKE '2026%'  -- All of 2026"
+      - "WHERE SUBSTR(origin_month, 1, 4) = '2026'  -- Year 2026"
+      - "WHERE SUBSTR(origin_month, 5, 2) = '11'  -- November"
+    
+  aggregation:
+    description: "Calculate totals and averages"
+    examples:
+      - "SELECT COUNT(*) as count FROM table WHERE condition"
+      - "SELECT AVG(p1_yield) as avg_yield FROM table"
+      - "SELECT outcome, COUNT(*) as count FROM table GROUP BY outcome"
+      
+  limiting_results:
+    description: "Show only first N rows"
+    examples:
+      - "FETCH FIRST 10 ROWS ONLY"
+      - "FETCH FIRST 5 ROWS ONLY"
+
+oracle_syntax_notes: |
+  TECHNICAL NOTES (for query generation only):
+  - Use SUBSTR(column, start, length) for text extraction
+  - Use FETCH FIRST n ROWS ONLY to limit results
+  - origin_month and current_month are text (VARCHAR) not dates
+  - Simple equality works: origin_month = '202611'
+
+few_shot_examples: |
+  Q: "How many devices DE_COMMIT for November 2026?"
+  A: SELECT COUNT(*) FROM conv_test_pivot_queue_sim WHERE outcome = 'DE_COMMIT' AND origin_month = '202611'
+  
+  Q: "Show 10 devices from 2026"
+  A: SELECT * FROM conv_test_pivot_queue_sim WHERE SUBSTR(origin_month, 1, 4) = '2026' FETCH FIRST 10 ROWS ONLY
+  
+  Q: "Average yield"
+  A: SELECT AVG(p1_yield) FROM conv_test_pivot_queue_sim
+
+business_glossary:
+  yield: "Pass rate percentage - how many devices passed testing. Higher is better (95%+ is good)"
+  pivot: "Redirecting a device to a different product grade when it doesn't meet original specs"
+  akit: "Assembly kit - packaging configuration"
+  outcome: "Final status - PLACED (going to production), DE_COMMIT (removed), etc."
+  origin_month: "Originally planned month - use for demand/planning questions"
+  current_month: "Actual month after schedule changes"
+  de_commit: "Removing device from production commitment"

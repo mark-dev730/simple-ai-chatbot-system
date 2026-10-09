@@ -1,0 +1,13 @@
+python-dotenv
+oracledb
+sqlalchemy
+fastapi
+uvicorn[standard]
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt==4.0.1
+python-multipart
+httpx
+email-validator
+numpy
+pyyaml
